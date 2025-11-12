@@ -307,14 +307,14 @@ export default function DocenteCrearAusencia() {
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* Header del modal */}
-                            <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 px-6 py-4 flex items-center justify-between">
-                                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                                    <Calendar className="h-6 w-6" />
+                            <div className="bg-gray-800 px-6 py-4 flex items-center justify-between">
+                                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                    <Calendar className="h-6 w-6 text-white" />
                                     Agregar más fechas
                                 </h3>
                                 <button
                                     onClick={cerrarModal}
-                                    className="text-gray-900 hover:bg-yellow-400 p-2 rounded-lg transition-colors"
+                                    className="text-white hover:bg-gray-700 p-2 rounded-lg transition-colors"
                                 >
                                     <X className="h-6 w-6" />
                                 </button>
@@ -325,7 +325,6 @@ export default function DocenteCrearAusencia() {
                                 <p className="text-gray-600 mb-4">
                                     Selecciona las fechas adicionales para tu ausencia:
                                 </p>
-                                
                                 <div className="space-y-3">
                                     {fechas.slice(1).map((fecha, index) => (
                                         <div key={index} className="flex items-center gap-2 animate-fadeIn">
@@ -333,12 +332,12 @@ export default function DocenteCrearAusencia() {
                                                 type="date"
                                                 value={fecha}
                                                 onChange={(e) => handleFechaChange(index + 1, e.target.value)}
-                                                className="flex-1 px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition"
+                                                className="flex-1 px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-800 focus:border-transparent transition"
                                             />
                                             <button
                                                 type="button"
                                                 onClick={() => eliminarFecha(index + 1)}
-                                                className="p-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                className="p-3 text-red-600 hover:bg-gray-100 rounded-lg transition-colors"
                                                 title="Eliminar fecha"
                                             >
                                                 <X className="h-5 w-5" />
@@ -350,7 +349,7 @@ export default function DocenteCrearAusencia() {
                                 <button
                                     type="button"
                                     onClick={agregarFecha}
-                                    className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-yellow-700 bg-yellow-50 border-2 border-yellow-200 rounded-lg hover:bg-yellow-100 transition-all transform hover:scale-105"
+                                    className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-gray-800 bg-gray-100 border-2 border-gray-200 rounded-lg hover:bg-gray-200 transition-all transform hover:scale-105"
                                 >
                                     <Plus className="h-5 w-5" />
                                     Agregar otra fecha
@@ -361,7 +360,7 @@ export default function DocenteCrearAusencia() {
                             <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200">
                                 <button
                                     onClick={cerrarModal}
-                                    className="px-6 py-2.5 bg-yellow-500 text-gray-900 font-semibold rounded-lg hover:bg-yellow-600 transition-all transform hover:scale-105 shadow-md"
+                                    className="px-6 py-2.5 bg-gray-800 text-white font-semibold rounded-lg hover:bg-gray-700 transition-all transform hover:scale-105 shadow-md"
                                 >
                                     Listo
                                 </button>
@@ -381,13 +380,13 @@ export default function DocenteCrearAusencia() {
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* Header del modal */}
-                            <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 px-6 py-4 flex items-center justify-between">
-                                <h3 className="text-xl font-bold text-gray-900">
+                            <div className="bg-white px-6 py-5 flex items-center justify-between border-b-2 border-gray-300">
+                                <h3 className="text-2xl font-bold text-gray-900">
                                     Confirmar Ausencia
                                 </h3>
                                 <button
                                     onClick={cerrarModalConfirmacion}
-                                    className="text-gray-900 hover:bg-yellow-400 p-2 rounded-lg transition-colors"
+                                    className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-2 rounded-lg transition-colors"
                                 >
                                     <X className="h-6 w-6" />
                                 </button>
@@ -400,20 +399,20 @@ export default function DocenteCrearAusencia() {
                                 </p>
 
                                 {/* Card de la ausencia */}
-                                <div className="bg-white border-2 border-gray-200 rounded-xl overflow-hidden">
+                                <div className="bg-white rounded-xl shadow-md overflow-hidden border-2 border-gray-300">
                                     {/* Contenido */}
-                                    <div className="p-5 pb-4">
-                                        <div className="mb-4">
-                                            <h3 className="text-sm text-gray-500">
+                                    <div className="p-5 sm:p-7 pb-4 sm:pb-5">
+                                        <div className="mb-4 sm:mb-5">
+                                            <h3 className="text-xs sm:text-sm text-gray-500">
                                                 Detalles de tu ausencia
                                             </h3>
-                                            <p className="font-bold text-gray-900 text-lg">
+                                            <p className="font-bold text-gray-900 text-base sm:text-lg">
                                                 {JSON.parse(localStorage.getItem("usuario") || "{}").nombre || "Docente"}
                                             </p>
                                         </div>
 
                                         {/* Información de la ausencia */}
-                                        <div className="space-y-3 border-t border-gray-300 pt-4">
+                                        <div className="space-y-4 border-t-2 border-gray-300 pt-4 sm:pt-5">
                                             <div className="flex items-start gap-2">
                                                 <FileText className="h-5 w-5 text-gray-400 mt-0.5 shrink-0" />
                                                 <div className="flex-1 min-w-0">
@@ -458,16 +457,16 @@ export default function DocenteCrearAusencia() {
                                     </div>
 
                                     {/* Footer */}
-                                    <div className="bg-gray-50 px-5 py-3 border-t border-gray-300">
+                                    <div className="bg-gray-50 px-5 sm:px-7 py-4 border-t-2 border-gray-300">
                                         <p className="text-xs text-gray-500">
-                                            Esta ausencia será registrada inmediatamente
+                                            Esta ausencia será registrada inmediatamente al confirmar.
                                         </p>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Footer del modal con botones */}
-                            <div className="bg-gray-50 px-6 py-4 flex gap-3 border-t border-gray-200">
+                            <div className="bg-white px-6 py-4 flex gap-3 border-t-2 border-gray-300">
                                 <button
                                     onClick={cerrarModalConfirmacion}
                                     className="flex-1 px-6 py-2.5 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-all"
@@ -477,10 +476,10 @@ export default function DocenteCrearAusencia() {
                                 <button
                                     onClick={handleSubmit}
                                     disabled={loading}
-                                    className={`flex-1 px-6 py-2.5 bg-yellow-500 text-gray-900 font-semibold rounded-lg transition-all shadow-md ${
+                                    className={`flex-1 px-6 py-2.5 bg-cyan-500 text-white font-semibold rounded-lg transition-all shadow-md ${
                                         loading 
                                             ? 'opacity-60 cursor-not-allowed' 
-                                            : 'hover:bg-yellow-600 transform hover:scale-105'
+                                            : 'hover:bg-cyan-600 transform hover:scale-105'
                                     }`}
                                 >
                                     {loading ? "Guardando..." : "Confirmar"}

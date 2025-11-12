@@ -1,14 +1,22 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import Header from "./Header";
 import api from "../../axiosConfig";
 import { toast } from "sonner";
 import { Calendar, BookOpen, FileText } from "lucide-react";
+import AOS from 'aos';
+import 'aos/dist/aos.css';
 
 export default function Ausencias() {
     const [ausencias, setAusencias] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        AOS.init({
+            duration: 800,
+            once: true,
+            offset: 100
+        });
         cargarAusencias();
     }, []);
 
@@ -16,7 +24,14 @@ export default function Ausencias() {
         try {
             setLoading(true);
             const response = await api.get('/inicio/ausencias');
-            setAusencias(response.data.ausencias);
+            
+            const raw = response.data.ausencias || [];
+            const sorted = raw.slice().sort((a, b) => {
+                const ta = a.fecha_creacion ? Date.parse(a.fecha_creacion) : 0;
+                const tb = b.fecha_creacion ? Date.parse(b.fecha_creacion) : 0;
+                return tb - ta;
+            });
+            setAusencias(sorted);
         } catch (error) {
             console.error("Error al cargar ausencias:", error);
             toast.error("Error al cargar las ausencias");
@@ -41,29 +56,36 @@ export default function Ausencias() {
             return formatearFecha(fechas[0]);
         }
         
-        // Para múltiples fechas
+        
         return fechas.map(fecha => formatearFecha(fecha)).join(', ');
     };
 
     const formatearFechaPublicacion = (fecha) => {
         if (!fecha) return 'Fecha desconocida';
-        
         try {
-            const date = new Date(fecha);
-            
-            // Verificar si es una fecha válida
+           
+            const fechaStr = fecha.replace(' ', 'T'); const date = new Date(fechaStr);
             if (isNaN(date.getTime())) {
                 return 'Fecha desconocida';
             }
-            
-            return date.toLocaleDateString('es-ES', {
+           
+            const opcionesFecha = {
+                
                 day: 'numeric',
                 month: 'long',
-                year: 'numeric'
-            }) + ' a las ' + date.toLocaleTimeString('es-ES', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+                year: 'numeric',
+            };
+            const opcionesHora = {
+                
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            };
+            const fechaFormateada = date.toLocaleDateString('es-CR', opcionesFecha);
+            let horaFormateada = date.toLocaleTimeString('es-CR', opcionesHora);
+           
+            horaFormateada = horaFormateada.replace('a. m.', 'a.m.').replace('p. m.', 'p.m.').replace('AM', 'a.m.').replace('PM', 'p.m.').replace('a. m.', 'a.m.').replace('p. m.', 'p.m.');
+            return `${fechaFormateada}, ${horaFormateada}`;
         } catch (error) {
             console.error('Error al formatear fecha:', error);
             return 'Fecha desconocida';
@@ -84,29 +106,37 @@ export default function Ausencias() {
     return (
         <div>
             <Header />
-            <div className="min-h-screen bg-gray-50 py-12">
-                <div className="container mx-auto px-6">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-2">Ausencias de Docentes</h1>
-                    <p className="text-gray-600 text-lg mb-8">
-                        Consulta las ausencias programadas de los docentes
-                    </p>
+            <div className="min-h-screen bg-gray-50 py-8 md:py-12">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                    {/* Título centrado */}
+                    <div className="text-center mb-8 md:mb-12">
+                        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-2 px-4">
+                            Ausencias de Docentes
+                        </h1>
+                        <p className="text-gray-600 text-base sm:text-lg md:text-xl px-4">
+                            Consulta las ausencias programadas de los docentes
+                        </p>
+                    </div>
 
                     {ausencias.length === 0 ? (
-                        <div className="bg-white rounded-xl shadow-md p-12 text-center">
-                            <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                            <p className="text-gray-500 text-lg">No hay ausencias registradas</p>
+                        <div className="max-w-md mx-auto bg-white rounded-xl shadow-md p-8 sm:p-12 text-center">
+                            <Calendar className="h-12 w-12 sm:h-16 sm:w-16 text-gray-300 mx-auto mb-4" />
+                            <p className="text-gray-500 text-base sm:text-lg">No hay ausencias registradas</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 max-w-7xl mx-auto">
                             {ausencias.map((ausencia) => (
                                 <div
                                     key={ausencia.id}
-                                    className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+                                    data-aos="fade-right"
+                                    data-aos-offset="300"
+                                    data-aos-easing="ease-in-sine"
+                                    className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300"
                                 >
                                     {/* Header con foto y nombre */}
-                                    <div className="p-6 pb-4">
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 shrink-0">
+                                    <div className="p-5 sm:p-7 pb-4 sm:pb-5">
+                                        <div className="flex items-center gap-3 mb-4 sm:mb-5">
+                                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden bg-gray-200 shrink-0">
                                                 {ausencia.docente_foto ? (
                                                     <img
                                                         src={`https://sistemainformacion.pythonanywhere.com/uploads/${ausencia.docente_foto}`}
@@ -115,57 +145,57 @@ export default function Ausencias() {
                                                     />
                                                 ) : (
                                                     <div className="w-full h-full bg-blue-100 flex items-center justify-center">
-                                                        <span className="text-blue-600 font-bold text-lg">
+                                                        <span className="text-blue-600 font-bold text-base sm:text-lg">
                                                             {ausencia.docente_nombre?.charAt(0)}
                                                         </span>
                                                     </div>
                                                 )}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <h3 className="text-sm text-gray-500">
+                                                <h3 className="text-xs sm:text-sm text-gray-500">
                                                     Detalles de ausencias del docente
                                                 </h3>
-                                                <p className="font-bold text-gray-900 text-lg truncate">
+                                                <p className="font-bold text-gray-900 text-base sm:text-lg truncate">
                                                     {ausencia.docente_nombre}
                                                 </p>
                                             </div>
                                         </div>
 
                                         {/* Información de la ausencia */}
-                                        <div className="space-y-3 border-t border-gray-300 pt-4">
+                                        <div className="space-y-4 border-t-2 border-gray-300 pt-4 sm:pt-5">
                                             <div className="flex items-start gap-2">
-                                                <BookOpen className="h-5 w-5 text-gray-400 mt-0.5 shrink-0" />
-                                                <div>
-                                                    <p className="text-sm font-semibold text-gray-700">Materia:</p>
-                                                    <p className="text-sm text-gray-600">{ausencia.materia_nombre}</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-start gap-2">
-                                                <FileText className="h-5 w-5 text-gray-400 mt-0.5 shrink-0" />
+                                                <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mt-0.5 shrink-0" />
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-semibold text-gray-700">Motivo:</p>
-                                                    <p className="text-sm text-gray-600 break-words">{ausencia.motivo}</p>
+                                                    <p className="text-xs sm:text-sm font-semibold text-gray-700">Materia:</p>
+                                                    <p className="text-xs sm:text-sm text-gray-600 break-words">{ausencia.materia_nombre}</p>
                                                 </div>
                                             </div>
 
                                             <div className="flex items-start gap-2">
-                                                <Calendar className="h-5 w-5 text-gray-400 mt-0.5 shrink-0" />
-                                                <div className="flex-1">
-                                                    <p className="text-sm font-semibold text-gray-700">
+                                                <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mt-0.5 shrink-0" />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs sm:text-sm font-semibold text-gray-700">Motivo:</p>
+                                                    <p className="text-xs sm:text-sm text-gray-600 break-words">{ausencia.motivo}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-start gap-2">
+                                                <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mt-0.5 shrink-0" />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs sm:text-sm font-semibold text-gray-700">
                                                         {ausencia.fechas && ausencia.fechas.length > 1 ? 'Días:' : 'Día:'}
                                                     </p>
                                                     {ausencia.fechas && ausencia.fechas.length > 1 ? (
-                                                        <ul className="text-sm text-gray-600 space-y-1">
+                                                        <ul className="text-xs sm:text-sm text-gray-600 space-y-1">
                                                             {ausencia.fechas.map((fecha, index) => (
                                                                 <li key={index} className="flex items-start">
                                                                     <span className="mr-1">•</span>
-                                                                    <span>{formatearFecha(fecha)}</span>
+                                                                    <span className="break-words">{formatearFecha(fecha)}</span>
                                                                 </li>
                                                             ))}
                                                         </ul>
                                                     ) : (
-                                                        <p className="text-sm text-gray-600">
+                                                        <p className="text-xs sm:text-sm text-gray-600 break-words">
                                                             {formatearFecha(ausencia.fechas ? ausencia.fechas[0] : ausencia.fecha_ausencia)}
                                                         </p>
                                                     )}
@@ -175,7 +205,7 @@ export default function Ausencias() {
                                     </div>
 
                                     {/* Footer con fecha de publicación */}
-                                    <div className="bg-gray-50 px-6 py-3 border-t border-gray-300">
+                                    <div className="bg-gray-50 px-5 sm:px-7 py-4 border-t-2 border-gray-300">
                                         <p className="text-xs text-gray-500">
                                             Publicado: {formatearFechaPublicacion(ausencia.fecha_creacion)}
                                         </p>
@@ -184,8 +214,20 @@ export default function Ausencias() {
                             ))}
                         </div>
                     )}
+
+                    {/* CTA: Volver al inicio */}
+                    <div className="mt-8 sm:mt-12 flex justify-center">
+                        <Link 
+                            to="/" 
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg shadow-md transition-all hover:scale-105 text-sm sm:text-base"
+                        >
+                            Volver al inicio
+                        </Link>
+                    </div>
                 </div>
             </div>
         </div>
     );
 }
+
+

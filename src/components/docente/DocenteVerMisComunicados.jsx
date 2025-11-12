@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Megaphone, FileText, Calendar, Plus, ArrowLeft, Inbox, Download, File, Image as ImageIcon, X, ExternalLink } from "lucide-react";
+import { Megaphone, FileText, Calendar, Plus, ArrowLeft, Inbox, Download, File, Image as ImageIcon, X, ExternalLink, Edit, Trash2 } from "lucide-react";
 import DocenteHeader from "./DocenteHeader";
 import { api } from "../../axiosConfig";
 
@@ -11,6 +11,13 @@ export default function DocenteVerMisComunicados() {
     const [comunicados, setComunicados] = useState([]);
     const [comunicadoSeleccionado, setComunicadoSeleccionado] = useState(null);
     const [mostrarModal, setMostrarModal] = useState(false);
+    const [mostrarModalEditar, setMostrarModalEditar] = useState(false);
+    const [mostrarModalEliminar, setMostrarModalEliminar] = useState(false);
+    const [formEditar, setFormEditar] = useState({ titulo: '', contenido: '' });
+    const [archivosActuales, setArchivosActuales] = useState([]);
+    const [archivosNuevos, setArchivosNuevos] = useState([]);
+    const [archivosAEliminar, setArchivosAEliminar] = useState([]);
+    const [loadingAccion, setLoadingAccion] = useState(false);
 
     useEffect(() => {
         cargarComunicados();
@@ -108,6 +115,129 @@ export default function DocenteVerMisComunicados() {
     const cerrarModal = () => {
         setMostrarModal(false);
         setComunicadoSeleccionado(null);
+    };
+
+    const abrirModalEditar = (comunicado) => {
+        setComunicadoSeleccionado(comunicado);
+        setFormEditar({
+            titulo: comunicado.titulo,
+            contenido: comunicado.contenido
+        });
+        setArchivosActuales(comunicado.archivos || []);
+        setArchivosNuevos([]);
+        setArchivosAEliminar([]);
+        setMostrarModal(false);
+        setMostrarModalEditar(true);
+    };
+
+    const cerrarModalEditar = () => {
+        setMostrarModalEditar(false);
+        setFormEditar({ titulo: '', contenido: '' });
+        setArchivosActuales([]);
+        setArchivosNuevos([]);
+        setArchivosAEliminar([]);
+    };
+
+    const abrirModalEliminar = (comunicado) => {
+        setComunicadoSeleccionado(comunicado);
+        setMostrarModal(false);
+        setMostrarModalEliminar(true);
+    };
+
+    const cerrarModalEliminar = () => {
+        setMostrarModalEliminar(false);
+        setComunicadoSeleccionado(null);
+    };
+
+    const handleEditarChange = (e) => {
+        const { name, value } = e.target;
+        setFormEditar(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleAgregarArchivos = (e) => {
+        const files = Array.from(e.target.files);
+        setArchivosNuevos(prev => [...prev, ...files]);
+    };
+
+    const handleEliminarArchivoActual = (index) => {
+        setArchivosAEliminar(prev => [...prev, index]);
+    };
+
+    const handleEliminarArchivoNuevo = (index) => {
+        setArchivosNuevos(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleActualizarComunicado = async () => {
+        if (!formEditar.titulo.trim() || !formEditar.contenido.trim()) {
+            toast.error("Título y contenido son requeridos");
+            return;
+        }
+
+        setLoadingAccion(true);
+        try {
+            const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+            
+            const formData = new FormData();
+            formData.append('usuario_id', usuario.id);
+            formData.append('titulo', formEditar.titulo);
+            formData.append('contenido', formEditar.contenido);
+            
+            // Agregar índices de archivos a eliminar
+            if (archivosAEliminar.length > 0) {
+                formData.append('archivos_eliminar', archivosAEliminar.join(','));
+            }
+            
+            // Agregar nuevos archivos
+            archivosNuevos.forEach((file) => {
+                formData.append('archivos', file);
+            });
+            
+            const response = await api.put(
+                `/docente/comunicados/${comunicadoSeleccionado.id}`,
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                }
+            );
+
+            if (response.status === 200) {
+                toast.success("Comunicado actualizado exitosamente");
+                cerrarModalEditar();
+                cargarComunicados();
+            }
+        } catch (error) {
+            toast.error("Error al actualizar el comunicado");
+            console.error(error);
+        } finally {
+            setLoadingAccion(false);
+        }
+    };
+
+    const handleEliminarComunicado = async () => {
+        setLoadingAccion(true);
+        try {
+            const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+            
+            const response = await api.delete(
+                `/docente/comunicados/${comunicadoSeleccionado.id}`,
+                {
+                    params: { usuario_id: usuario.id }
+                }
+            );
+
+            if (response.status === 200) {
+                toast.success("Comunicado eliminado exitosamente");
+                cerrarModalEliminar();
+                cargarComunicados();
+            }
+        } catch (error) {
+            toast.error("Error al eliminar el comunicado");
+            console.error(error);
+        } finally {
+            setLoadingAccion(false);
+        }
     };
 
     return (
@@ -330,12 +460,249 @@ export default function DocenteVerMisComunicados() {
                             </div>
 
                             {/* Footer del modal con botón cerrar */}
-                            <div className="bg-white px-6 py-4 border-t border-gray-200 flex justify-end">
+                            <div className="bg-white px-6 py-4 border-t border-gray-200 flex gap-3">
+                                <button
+                                    onClick={() => abrirModalEditar(comunicadoSeleccionado)}
+                                    className="flex items-center gap-2 px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-all transform hover:scale-105 shadow-md"
+                                >
+                                    <Edit className="h-5 w-5" />
+                                    Editar
+                                </button>
+                                <button
+                                    onClick={() => abrirModalEliminar(comunicadoSeleccionado)}
+                                    className="flex items-center gap-2 px-6 py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-all transform hover:scale-105 shadow-md"
+                                >
+                                    <Trash2 className="h-5 w-5" />
+                                    Eliminar
+                                </button>
                                 <button
                                     onClick={cerrarModal}
-                                    className="px-6 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-semibold rounded-lg transition-all transform hover:scale-105 shadow-md"
+                                    className="flex-1 px-6 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition-all"
                                 >
                                     Cerrar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Modal de Editar */}
+                {mostrarModalEditar && comunicadoSeleccionado && (
+                    <div 
+                        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadeIn"
+                        onClick={cerrarModalEditar}
+                    >
+                        <div 
+                            className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden animate-slideUp"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Header */}
+                            <div className="bg-white px-6 py-5 border-b-2 border-gray-300">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-2xl font-bold text-gray-900">Editar Comunicado</h3>
+                                    <button
+                                        onClick={cerrarModalEditar}
+                                        className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-2 rounded-lg transition-colors"
+                                    >
+                                        <X className="h-6 w-6" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Contenido */}
+                            <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+                                <div className="space-y-4">
+                                    {/* Título */}
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            Título *
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="titulo"
+                                            value={formEditar.titulo}
+                                            onChange={handleEditarChange}
+                                            className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Título del comunicado"
+                                        />
+                                    </div>
+
+                                    {/* Contenido */}
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            Contenido *
+                                        </label>
+                                        <textarea
+                                            name="contenido"
+                                            value={formEditar.contenido}
+                                            onChange={handleEditarChange}
+                                            rows="8"
+                                            className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Contenido del comunicado"
+                                        />
+                                    </div>
+
+                                    {/* Archivos Actuales */}
+                                    {archivosActuales.length > 0 && (
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                Archivos Actuales
+                                            </label>
+                                            <div className="space-y-2">
+                                                {archivosActuales.map((archivo, index) => {
+                                                    if (archivosAEliminar.includes(index)) return null;
+                                                    return (
+                                                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                                {getFileIcon(archivo.nombre_original)}
+                                                                <span className="text-sm text-gray-700 truncate">
+                                                                    {archivo.nombre_original || 'Archivo'}
+                                                                </span>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleEliminarArchivoActual(index)}
+                                                                className="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Nuevos Archivos */}
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            Agregar Nuevos Archivos
+                                        </label>
+                                        <input
+                                            type="file"
+                                            multiple
+                                            onChange={handleAgregarArchivos}
+                                            className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        />
+                                        {archivosNuevos.length > 0 && (
+                                            <div className="mt-3 space-y-2">
+                                                {archivosNuevos.map((file, index) => (
+                                                    <div key={index} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                            <File className="h-4 w-4 text-blue-600" />
+                                                            <span className="text-sm text-gray-700 truncate">
+                                                                {file.name}
+                                                            </span>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleEliminarArchivoNuevo(index)}
+                                                            className="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                                                        >
+                                                            <X className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Nota sobre archivos */}
+                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                        <p className="text-sm text-blue-800">
+                                            <strong>Nota:</strong> Puedes eliminar archivos existentes y agregar nuevos. Los cambios se guardarán al confirmar.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="bg-white px-6 py-4 border-t-2 border-gray-300 flex gap-3">
+                                <button
+                                    onClick={cerrarModalEditar}
+                                    className="flex-1 px-6 py-2.5 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-all"
+                                    disabled={loadingAccion}
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleActualizarComunicado}
+                                    disabled={loadingAccion}
+                                    className={`flex-1 px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-lg transition-all shadow-md ${
+                                        loadingAccion 
+                                            ? 'opacity-60 cursor-not-allowed' 
+                                            : 'hover:bg-blue-700 transform hover:scale-105'
+                                    }`}
+                                >
+                                    {loadingAccion ? "Guardando..." : "Guardar Cambios"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Modal de Confirmación de Eliminación */}
+                {mostrarModalEliminar && comunicadoSeleccionado && (
+                    <div 
+                        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadeIn"
+                        onClick={cerrarModalEliminar}
+                    >
+                        <div 
+                            className="bg-white rounded-2xl shadow-2xl max-w-md w-full animate-slideUp"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Header */}
+                            <div className="bg-white px-6 py-5 border-b-2 border-gray-300">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-2xl font-bold text-gray-900">Confirmar Eliminación</h3>
+                                    <button
+                                        onClick={cerrarModalEliminar}
+                                        className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-2 rounded-lg transition-colors"
+                                    >
+                                        <X className="h-6 w-6" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Contenido */}
+                            <div className="p-6">
+                                <div className="flex items-center justify-center mb-4">
+                                    <div className="bg-red-100 rounded-full p-4">
+                                        <Trash2 className="h-12 w-12 text-red-600" />
+                                    </div>
+                                </div>
+                                <p className="text-center text-gray-700 mb-2">
+                                    ¿Estás seguro de que deseas eliminar este comunicado?
+                                </p>
+                                <p className="text-center text-sm text-gray-500 mb-4">
+                                    <strong>"{comunicadoSeleccionado.titulo}"</strong>
+                                </p>
+                                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                    <p className="text-sm text-red-800">
+                                        <strong>Advertencia:</strong> Esta acción no se puede deshacer. El comunicado y todos sus archivos adjuntos serán eliminados permanentemente.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="bg-white px-6 py-4 border-t-2 border-gray-300 flex gap-3">
+                                <button
+                                    onClick={cerrarModalEliminar}
+                                    className="flex-1 px-6 py-2.5 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-all"
+                                    disabled={loadingAccion}
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleEliminarComunicado}
+                                    disabled={loadingAccion}
+                                    className={`flex-1 px-6 py-2.5 bg-red-600 text-white font-semibold rounded-lg transition-all shadow-md ${
+                                        loadingAccion 
+                                            ? 'opacity-60 cursor-not-allowed' 
+                                            : 'hover:bg-red-700 transform hover:scale-105'
+                                    }`}
+                                >
+                                    {loadingAccion ? "Eliminando..." : "Eliminar"}
                                 </button>
                             </div>
                         </div>
