@@ -28,13 +28,6 @@ export default function DocenteVerMisComunicados() {
         try {
             // Obtener el usuario del localStorage
             const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
-            
-            if (!usuario.id) {
-                toast.error("Usuario no autenticado");
-                navigate("/login");
-                return;
-            }
-
             const response = await api.get("/docente/mis-comunicados", {
                 params: { usuario_id: usuario.id }
             });

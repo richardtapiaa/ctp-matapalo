@@ -84,10 +84,6 @@ export default function Login() {
               className="w-16 h-16 object-contain drop-shadow-md"
             />
           </div>
-
-          <h2 className="text-3xl font-bold text-gray-900 text-center mb-2">
-            Sistema de Ausencias
-          </h2>
           <p className="text-sm text-gray-600 text-center mb-6">
             Inicia sesión para acceder a tu cuenta
           </p>
@@ -123,18 +119,6 @@ export default function Login() {
               />
             </div>
 
-            <div className="mb-5">
-              <label className="flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="remember"
-                  checked={formData.remember}
-                  onChange={handleChange}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-                />
-                <span className="ml-2 text-sm text-gray-700">Recordarme</span>
-              </label>
-            </div>
 
             <button 
               type="submit" 

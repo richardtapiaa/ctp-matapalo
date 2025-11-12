@@ -17,7 +17,7 @@ export default function Header() {
                 CTPM
               </span>
               <span className="text-yellow-400 text-xs font-semibold uppercase tracking-wider">
-                Sistema de Ausencias
+                Sistema de Información
               </span>
             </div>
           </Link>
