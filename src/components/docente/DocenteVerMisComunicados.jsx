@@ -212,11 +212,16 @@ export default function DocenteVerMisComunicados() {
         setLoadingAccion(true);
         try {
             const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
-            
+            if (!usuario.id) {
+                toast.error("Usuario no autenticado");
+                setLoadingAccion(false);
+                return;
+            }
             const response = await api.delete(
                 `/docente/comunicados/${comunicadoSeleccionado.id}`,
                 {
-                    params: { usuario_id: usuario.id }
+                    data: { usuario_id: usuario.id },
+                    headers: { 'Content-Type': 'application/json' }
                 }
             );
 
@@ -224,6 +229,8 @@ export default function DocenteVerMisComunicados() {
                 toast.success("Comunicado eliminado exitosamente");
                 cerrarModalEliminar();
                 cargarComunicados();
+            } else {
+                toast.error("No se pudo eliminar el comunicado");
             }
         } catch (error) {
             toast.error("Error al eliminar el comunicado");
